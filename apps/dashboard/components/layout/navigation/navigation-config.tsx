@@ -1,10 +1,13 @@
 import {
 	BugIcon,
 	ChatCircleIcon,
+	CodeIcon,
 	CurrencyDollarIcon,
+	FileTextIcon,
 	FunnelIcon,
 	GearIcon,
 	GlobeIcon,
+	HeartIcon,
 	HouseIcon,
 	// LinkIcon,
 	MapPinIcon,
@@ -83,6 +86,19 @@ export const websiteNavigation: NavigationSection[] = [
 		],
 	},
 	{
+		title: 'API Analytics',
+		items: [
+			{
+				name: 'API Metrics',
+				icon: CodeIcon,
+				href: '/api-analytics',
+				highlight: true,
+				alpha: true,
+				production: false,
+			},
+		],
+	},
+	{
 		title: 'Product Analytics',
 		items: [
 			{ name: 'Profiles', icon: UsersIcon, href: '/profiles', highlight: true },
@@ -96,11 +112,37 @@ export const websiteNavigation: NavigationSection[] = [
 		title: 'Engagement',
 		items: [
 			{
-				name: 'Assistant',
+				name: 'Databunny',
 				icon: RobotIcon,
 				href: '/assistant',
 				highlight: true,
 				alpha: true,
+			},
+		],
+	},
+	{
+		title: 'Observability',
+		items: [
+			{
+				name: 'Status',
+				icon: HeartIcon,
+				href: '/status',
+				highlight: true,
+				alpha: true,
+				production: false,
+			},
+		],
+	},
+	{
+		title: 'Automation',
+		items: [
+			{
+				name: 'Reports',
+				icon: FileTextIcon,
+				href: '/reports',
+				highlight: true,
+				alpha: true,
+				production: false,
 			},
 		],
 	},

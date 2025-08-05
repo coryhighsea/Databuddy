@@ -71,7 +71,7 @@ export function WebsiteSettingsTab({
 	onWebsiteUpdated,
 }: WebsiteDataTabProps) {
 	const router = useRouter();
-	const [copied, setCopied] = useState(false);
+	const [copiedBlockId, setCopiedBlockId] = useState<string | null>(null);
 	const [installMethod] = useState<'script' | 'npm'>('script');
 	const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 	const [showEditDialog, setShowEditDialog] = useState(false);
@@ -82,11 +82,11 @@ export function WebsiteSettingsTab({
 		useState<TrackingOptions>(RECOMMENDED_DEFAULTS);
 	const deleteWebsiteMutation = useDeleteWebsite();
 
-	const handleCopyCode = (code: string) => {
+	const handleCopyCode = (code: string, blockId: string, message: string) => {
 		navigator.clipboard.writeText(code);
-		setCopied(true);
-		toast.success('Code copied to clipboard');
-		setTimeout(() => setCopied(false), 2000);
+		setCopiedBlockId(blockId);
+		toast.success(message);
+		setTimeout(() => setCopiedBlockId(null), 2000);
 	};
 
 	const handleToggleOption = (option: keyof TrackingOptions) => {
@@ -132,19 +132,14 @@ export function WebsiteSettingsTab({
 					trackingOptions={trackingOptions}
 				/>
 
-				<div className="col-span-12 lg:col-span-9">
-					<Card className="rounded-lg border bg-background shadow-sm">
+				<div className="col-span-12 lg:col-span-7 xl:col-span-9">
+					<Card className="rounded border bg-background py-0 shadow-sm">
 						<CardContent className="p-6">
 							{activeTab === 'tracking' && (
 								<TrackingCodeTab
-									copied={copied}
+									copiedBlockId={copiedBlockId}
 									npmCode={npmCode}
 									onCopyCode={handleCopyCode}
-									onCopyComponentCode={() =>
-										handleCopyCode(
-											generateNpmComponentCode(websiteId, trackingOptions)
-										)
-									}
 									trackingCode={trackingCode}
 									websiteData={websiteData}
 									websiteId={websiteId}
@@ -179,7 +174,13 @@ export function WebsiteSettingsTab({
 										handleCopyCode(
 											installMethod === 'script'
 												? trackingCode
-												: generateNpmComponentCode(websiteId, trackingOptions)
+												: generateNpmComponentCode(websiteId, trackingOptions),
+											installMethod === 'script'
+												? 'script-tag'
+												: 'tracking-code',
+											installMethod === 'script'
+												? 'Script tag copied to clipboard!'
+												: 'Tracking code copied to clipboard!'
 										)
 									}
 									onEnableAll={() => {
@@ -234,12 +235,12 @@ function WebsiteHeader({
 	onEditClick: () => void;
 }) {
 	return (
-		<Card className="rounded-lg border bg-background shadow-sm">
+		<Card className="rounded border bg-background py-0 shadow-sm">
 			<CardContent className="p-6">
 				<div className="flex flex-col justify-between gap-4 lg:flex-row lg:items-center">
 					<div className="flex flex-col gap-3">
 						<div className="flex items-center gap-3">
-							<div className="rounded-lg bg-primary/10 p-2">
+							<div className="rounded bg-primary/10 p-2">
 								<GlobeIcon className="h-5 w-5 text-primary" />
 							</div>
 							<div>
@@ -358,8 +359,8 @@ function SettingsNavigation({
 		!trackingOptions.enableRetries;
 
 	return (
-		<div className="col-span-12 lg:col-span-3">
-			<Card className="rounded-lg border bg-background shadow-sm">
+		<div className="col-span-12 lg:col-span-5 xl:col-span-3">
+			<Card className="rounded border bg-background py-0 shadow-sm">
 				<CardContent className="p-4">
 					<div className="sticky top-4 space-y-2">
 						<Button
@@ -485,17 +486,15 @@ function TrackingCodeTab({
 	npmCode,
 	websiteData,
 	websiteId,
-	copied,
+	copiedBlockId,
 	onCopyCode,
-	onCopyComponentCode,
 }: {
 	trackingCode: string;
 	npmCode: string;
 	websiteData: Website;
 	websiteId: string;
-	copied: boolean;
-	onCopyCode: (code: string) => void;
-	onCopyComponentCode: () => void;
+	copiedBlockId: string | null;
+	onCopyCode: (code: string, blockId: string, message: string) => void;
 }) {
 	return (
 		<div className="space-y-4">
@@ -520,9 +519,15 @@ function TrackingCodeTab({
 				<TabsContent className="mt-0" value="script">
 					<CodeBlock
 						code={trackingCode}
-						copied={copied}
+						copied={copiedBlockId === 'script-tag'}
 						description="Add this script to the <head> section of your website:"
-						onCopy={() => onCopyCode(trackingCode)}
+						onCopy={() =>
+							onCopyCode(
+								trackingCode,
+								'script-tag',
+								'Script tag copied to clipboard!'
+							)
+						}
 					/>
 				</TabsContent>
 
@@ -552,45 +557,75 @@ function TrackingCodeTab({
 							<TabsContent className="mt-0" value="npm">
 								<CodeBlock
 									code="npm install @databuddy/sdk"
-									copied={copied}
+									copied={copiedBlockId === 'npm-install'}
 									description=""
-									onCopy={() => onCopyCode('npm install @databuddy/sdk')}
+									onCopy={() =>
+										onCopyCode(
+											'npm install @databuddy/sdk',
+											'npm-install',
+											'Command copied to clipboard!'
+										)
+									}
 								/>
 							</TabsContent>
 
 							<TabsContent className="mt-0" value="yarn">
 								<CodeBlock
 									code="yarn add @databuddy/sdk"
-									copied={copied}
+									copied={copiedBlockId === 'yarn-install'}
 									description=""
-									onCopy={() => onCopyCode('yarn add @databuddy/sdk')}
+									onCopy={() =>
+										onCopyCode(
+											'yarn add @databuddy/sdk',
+											'yarn-install',
+											'Command copied to clipboard!'
+										)
+									}
 								/>
 							</TabsContent>
 
 							<TabsContent className="mt-0" value="pnpm">
 								<CodeBlock
 									code="pnpm add @databuddy/sdk"
-									copied={copied}
+									copied={copiedBlockId === 'pnpm-install'}
 									description=""
-									onCopy={() => onCopyCode('pnpm add @databuddy/sdk')}
+									onCopy={() =>
+										onCopyCode(
+											'pnpm add @databuddy/sdk',
+											'pnpm-install',
+											'Command copied to clipboard!'
+										)
+									}
 								/>
 							</TabsContent>
 
 							<TabsContent className="mt-0" value="bun">
 								<CodeBlock
 									code="bun add @databuddy/sdk"
-									copied={copied}
+									copied={copiedBlockId === 'bun-install'}
 									description=""
-									onCopy={() => onCopyCode('bun add @databuddy/sdk')}
+									onCopy={() =>
+										onCopyCode(
+											'bun add @databuddy/sdk',
+											'bun-install',
+											'Command copied to clipboard!'
+										)
+									}
 								/>
 							</TabsContent>
 						</Tabs>
 
 						<CodeBlock
 							code={npmCode}
-							copied={copied}
+							copied={copiedBlockId === 'tracking-code'}
 							description="Then initialize the tracker in your code:"
-							onCopy={onCopyComponentCode}
+							onCopy={() =>
+								onCopyCode(
+									npmCode,
+									'tracking-code',
+									'Tracking code copied to clipboard!'
+								)
+							}
 						/>
 					</div>
 				</TabsContent>
@@ -686,20 +721,22 @@ function WebsiteInfoSection({
 	websiteId: string;
 }) {
 	return (
-		<div className="mt-6 grid grid-cols-2 gap-4">
+		<div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
 			<div className="space-y-3 rounded-md bg-muted/50 p-4">
 				<h4 className="flex items-center gap-2 font-medium text-sm">
 					<InfoIcon className="h-4 w-4 text-muted-foreground" />
 					Website Details
 				</h4>
 				<div className="space-y-2 text-sm">
-					<div className="flex justify-between">
+					<div className="flex flex-col sm:flex-row sm:justify-between">
 						<span className="text-muted-foreground">Created</span>
-						<span>{new Date(websiteData.createdAt).toLocaleDateString()}</span>
+						<span className="mt-1 sm:mt-0">
+							{new Date(websiteData.createdAt).toLocaleDateString()}
+						</span>
 					</div>
-					<div className="flex justify-between">
+					<div className="flex flex-col sm:flex-row sm:justify-between">
 						<span className="text-muted-foreground">Website ID</span>
-						<div className="flex items-center gap-1 font-mono text-xs">
+						<div className="mt-1 flex items-center gap-1 font-mono text-xs sm:mt-0">
 							{websiteId}
 							<Button
 								className="h-5 w-5"
@@ -718,17 +755,20 @@ function WebsiteInfoSection({
 			</div>
 
 			<div className="rounded-md border border-primary/10 bg-primary/5 p-4">
-				<div className="flex items-start gap-3">
-					<div className="mt-0.5 rounded-full bg-primary/10 p-1.5">
-						<CheckIcon className="h-4 w-4 text-primary" />
-					</div>
-					<div>
+				<div className="flex flex-col items-start gap-x-3 gap-y-2">
+					<div className="flex items-center gap-x-2">
+						<div className="mt-0.5 rounded-full bg-primary/10 p-1.5">
+							<CheckIcon className="h-4 w-4 text-primary" />
+						</div>
 						<p className="font-medium text-sm">Ready to Track</p>
+					</div>
+
+					<div>
 						<p className="mt-1 text-muted-foreground text-xs">
 							Add the tracking code to your website to start collecting data.
 						</p>
 						<Button
-							className="h-6 px-0 text-primary text-xs"
+							className="-ml-2 h-6 px-0 text-primary text-xs"
 							size="sm"
 							variant="link"
 						>
@@ -984,7 +1024,7 @@ function TrackingOptionCard({
 	const isEnabled = inverted ? !enabled : enabled;
 
 	return (
-		<div className="space-y-4 rounded-lg border p-4">
+		<div className="space-y-4 rounded border p-4">
 			<div className="flex items-start justify-between border-b pb-2">
 				<div className="space-y-0.5">
 					<div className="font-medium">{title}</div>
@@ -1062,7 +1102,7 @@ function SamplingRateSection({
 	onSamplingRateChange: (rate: number) => void;
 }) {
 	return (
-		<div className="rounded-lg border p-4">
+		<div className="rounded border p-4">
 			<h4 className="mb-3 font-medium">Sampling Rate</h4>
 			<div className="space-y-4">
 				<div className="grid grid-cols-2 gap-8">
@@ -1119,7 +1159,7 @@ function BatchingSection({
 	) => void;
 }) {
 	return (
-		<div className="rounded-lg border p-4">
+		<div className="rounded border p-4">
 			<h4 className="mb-3 font-medium">Batching</h4>
 			<div className="space-y-4">
 				<div className="flex items-center space-x-2">
@@ -1219,7 +1259,7 @@ function NetworkResilienceSection({
 	) => void;
 }) {
 	return (
-		<div className="rounded-lg border p-4">
+		<div className="rounded border p-4">
 			<h4 className="mb-3 font-medium">Network Resilience</h4>
 			<div className="space-y-4">
 				<div className="flex items-center space-x-2">
