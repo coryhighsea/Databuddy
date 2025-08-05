@@ -51,7 +51,14 @@ export const ReferrerSourceCell: React.FC<ReferrerSourceCellProps> = ({
 				domain={domain}
 				size={16}
 			/>
-			{displayName}
+			<a
+				href={`https://${domain}`}
+				target="_blank"
+				rel="noopener noreferrer"
+				className="hover:text-blue-600 hover:underline transition-colors"
+			>
+				{displayName}
+			</a>
 		</span>
 	);
 };
